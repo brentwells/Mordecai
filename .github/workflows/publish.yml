@@ -3,26 +3,70 @@
 # short-lived NuGet credential, which nuget.org accepts only because the repo, this
 # workflow's filename, and the environment all match the "main-Mordecai" trust policy.
 #
-# Trigger: push a version tag (the tag sets the package version), or run manually
-# from the Actions tab (uses the version from the project files).
+# Mordecai is evergreen: every PR merged to main is a release. The version is the PR's
+# merge date (UTC) followed by its number, yyyy.M.d.PR, so PR #12 merged on 2026-10-03
+# ships as 2026.10.3.12. A push to main that did not come from a merged PR publishes
+# nothing. Running manually from the Actions tab re-publishes the current main commit's
+# version, which is a no-op if nuget.org already has it.
 name: publish
 
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# Releases go out in merge order, and one that is mid-push is never cancelled.
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read # to find the PR this commit was merged from
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - name: Resolve version from the merged PR
+        id: resolve
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # An API failure fails the step here, rather than reading as "no PR" and silently
+          # skipping a release.
+          merged=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" \
+            --jq '[.[] | select(.merged_at != null and .base.ref == "main")][0] // empty
+                  | "\(.number) \(.merged_at)"')
+          read -r pr merged_at <<< "$merged" || true
+
+          if [[ -z "${pr:-}" ]]; then
+            echo "::notice::${GITHUB_SHA::7} was not merged from a pull request; nothing to publish."
+            exit 0
+          fi
+
+          # %-m / %-d drop leading zeros, which NuGet would strip anyway.
+          version="$(date -u -d "$merged_at" +%Y.%-m.%-d).${pr}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "::notice::Publishing Mordecai ${version} from PR #${pr}."
+
   publish:
+    needs: version
+    if: needs.version.outputs.version != ''
     runs-on: ubuntu-latest
     # Must match the Environment field of the nuget.org trust policy.
     environment: nuget
     permissions:
       contents: read
       id-token: write # required for the OIDC exchange
+    env:
+      # Passed to build and pack alike, so the DLL's file version matches the package.
+      VERSION_PROPS: -p:Version=${{ needs.version.outputs.version }} -p:ContinuousIntegrationBuild=true
     steps:
       - uses: actions/checkout@v4
 
@@ -32,21 +76,12 @@ jobs:
 
       - run: dotnet restore Mordecai.slnx
 
-      - run: dotnet build Mordecai.slnx -c Release --no-restore
+      - run: dotnet build Mordecai.slnx -c Release --no-restore $VERSION_PROPS
 
       - run: dotnet test Mordecai.slnx -c Release --no-build
 
-      - name: Resolve package version from the tag
-        shell: bash
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            echo "PACK_VERSION=-p:Version=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
-          fi
-
       - name: Pack
-        run: >
-          dotnet pack src/Mordecai/Mordecai.csproj -c Release --no-build
-          -o artifacts -p:ContinuousIntegrationBuild=true $PACK_VERSION
+        run: dotnet pack src/Mordecai/Mordecai.csproj -c Release --no-build -o artifacts $VERSION_PROPS
 
       # Exchanges the OIDC token for a temporary NuGet API key, exposed as a step
       # output — it is NOT persisted to the environment of later steps.
