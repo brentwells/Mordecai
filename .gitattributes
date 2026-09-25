@@ -1,0 +1,9 @@
+# .editorconfig declares crlf and `dotnet format --verify-no-changes` enforces it,
+# so keep the working tree consistent with that rather than letting git renormalize.
+* text=auto eol=crlf
+
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.snk binary

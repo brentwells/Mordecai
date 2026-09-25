@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Mordecai\Mordecai.csproj" />
+    <ProjectReference Include="..\Mordecai.Tests.Scanning\Mordecai.Tests.Scanning.csproj" />
+  </ItemGroup>
+
+</Project>

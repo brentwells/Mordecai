@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+
+  <!--
+    Referenced as a plain library, not an analyzer: these tests drive the generator
+    directly through Roslyn's CSharpGeneratorDriver so they can assert on emitted source.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Mordecai.SourceGenerator\Mordecai.SourceGenerator.csproj" />
+    <ProjectReference Include="..\..\src\Mordecai\Mordecai.csproj" />
+  </ItemGroup>
+
+</Project>

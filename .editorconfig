@@ -1,0 +1,44 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+[*.{csproj,props,targets,slnx,json,yml,yaml,xml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.cs]
+csharp_style_namespace_declarations = file_scoped:error
+csharp_style_var_when_type_is_apparent = true:suggestion
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:error
+csharp_prefer_static_local_function = true:warning
+dotnet_style_readonly_field = true:warning
+
+# ---------------------------------------------------------------------------
+# Public API naming suppressions.
+#
+# Mordecai's public surface uses established mediator-pattern vocabulary because
+# that is what makes the library legible to anyone who has used one before.
+# These two rules propose renames that would trade that legibility for nothing.
+# Do not extend this list to silence ordinary analyzer findings.
+# ---------------------------------------------------------------------------
+
+# "Rename type so it does not end in 'Delegate'" -- RequestHandlerDelegate and
+# StreamHandlerDelegate are exactly what they are: delegates naming a continuation.
+dotnet_diagnostic.CA1711.severity = none
+
+# "Parameter 'next' conflicts with reserved keyword 'Next'" -- 'next' is the
+# clearest possible name for a pipeline continuation.
+dotnet_diagnostic.CA1716.severity = none
+
+[benchmarks/**/*.cs]
+# BenchmarkDotNet discovers [Benchmark] and [GlobalSetup] members by reflection on
+# an instance, so they cannot be static even when they touch no instance state.
+dotnet_diagnostic.CA1822.severity = none

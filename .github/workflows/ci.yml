@@ -1,0 +1,30 @@
+# CI for pull requests into main. The `build` job name is the required status
+# check referenced by the `main-protection` ruleset — rename the job and the
+# ruleset's required check must be updated to match.
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version-file: global.json
+
+      - run: dotnet restore Mordecai.slnx
+
+      - run: dotnet build Mordecai.slnx -c Release --no-restore
+
+      - run: dotnet test Mordecai.slnx -c Release --no-build
+
+      - run: dotnet format Mordecai.slnx --verify-no-changes

@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/Mordecai.Benchmarks/Mordecai.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Mordecai.SourceGenerator/Mordecai.SourceGenerator.csproj" />
+    <Project Path="src/Mordecai/Mordecai.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Mordecai.SourceGenerator.Tests/Mordecai.SourceGenerator.Tests.csproj" />
+    <Project Path="tests/Mordecai.Tests/Mordecai.Tests.csproj" />
+    <Project Path="tests/Mordecai.Tests.Scanning/Mordecai.Tests.Scanning.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    A plain class library whose only job is to be a second assembly for the scanner to walk.
+    Handler discovery is per-assembly, so the scanning tests need a target that is separate from
+    Mordecai.Tests itself: the test assembly holds deliberately malformed fakes (duplicate
+    handlers, an open generic) that would make every scan of it throw.
+
+    tests/Directory.Build.props turns projects here into xunit executables. Undo that; this one
+    is a library and runs no tests.
+  -->
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <IsTestProject>false</IsTestProject>
+    <RootNamespace>Mordecai.Tests.Scanning</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Remove="xunit.v3" />
+    <PackageReference Remove="xunit.runner.visualstudio" />
+    <PackageReference Remove="Microsoft.NET.Test.Sdk" />
+    <PackageReference Remove="coverlet.collector" />
+    <Using Remove="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Mordecai\Mordecai.csproj" />
+  </ItemGroup>
+
+</Project>
