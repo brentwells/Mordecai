@@ -62,8 +62,8 @@ build. NuGet selects it for any consumer on `net10.0` or later, so forward compa
 holding the floor, not from adding targets.
 
 - **Do not raise the floor.** When a new .NET ships, `src/Mordecai` stays on `net10.0`. Raising it
-  drops every .NET 10 consumer: a breaking change that needs an explicit decision and a major
-  version, never a side effect of an SDK or framework upgrade.
+  drops every .NET 10 consumer: a breaking change that needs an explicit decision, called out in
+  its PR (see [Releases](#releases)), never a side effect of an SDK or framework upgrade.
 - **Do not lower it.** Supporting .NET 8/9 was evaluated on 2026-09-25 and declined. They were one
   API swap away, but both leave Microsoft support on 2026-11-10.
 - **No multi-targeting and no `#if` framework branching in `src/`.** An API that only exists in a
@@ -174,6 +174,28 @@ ordinary findings.
 
 **`GenerateDocumentationFile` is on for shipping projects**, so every public member needs an XML
 doc comment or the build fails.
+
+## Releases
+
+Mordecai is evergreen. There are no release branches, no tags, and no version numbers to bump:
+**every PR merged to `main` is published to nuget.org** by `.github/workflows/publish.yml`.
+
+- **The version is `yyyy.M.d.PR`:** the PR's merge date in UTC, then its number. PR #12 merged on
+  2026-10-03 ships as `2026.10.3.12`. There are no leading zeros, because NuGet strips them.
+- **Never set a version by hand.** Don't put `<Version>` in a project file and don't push tags. The
+  workflow passes the computed version to both build and pack, so the DLL's file version matches
+  the package.
+- **Merging is shipping.** `main` must always be releasable, so a PR isn't ready to merge until
+  it's ready to publish. Split work that isn't.
+- **The PR is the release note.** A date version says when something shipped, not what changed,
+  so the PR title and description are the changelog. Anything that can break a consumer must be
+  called out explicitly in the PR description. That includes changed or removed public API,
+  changed behavior pinned in `docs/guides/usage.md`, and a raised framework floor.
+- **A push to `main` that isn't a merged PR publishes nothing.** The initial commit is one example.
+  Running the workflow manually re-publishes the current `main` commit's version, which is a no-op
+  if nuget.org already has it.
+- **Published versions are permanent.** nuget.org can unlist a version but never delete or replace
+  it. Fix a bad release by merging a fix, which ships as the next version.
 
 ## Documentation
 
